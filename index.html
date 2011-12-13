@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Incremental</title>
+<body>
+
+<p>
+Text fields flash green when the change event fires.
+</p>
+
+<input/>
+
+<input/>
+
+<script src="http://code.jquery.com/jquery-1.7.min.js"></script>
+<script src="jquery.incremental.js"></script>
+<script>
+$("input")
+.incremental()
+.change(function() {
+	console.info("Change");
+	var element = $(this);
+	element.css("background-color", "green");
+	setTimeout(function() {
+			element.css("background-color", "");
+		}, 100);
+	});
+</script>
+
+</body>
+</html>

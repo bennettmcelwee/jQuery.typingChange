@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>jQuery.incremental Test Suite</title>
+
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" media="screen" />
+</head>
+<body>
+
+	<h1 id="qunit-header">jQuery.incremental</h1>
+	<h2 id="qunit-banner"></h2>
+	<div id="qunit-testrunner-toolbar"></div>
+	<h2 id="qunit-userAgent"></h2>
+	<ol id="qunit-tests"></ol>
+	<div id="qunit-fixture">
+		<input id="input"/>
+	</div>
+
+<script src="http://code.jquery.com/jquery-1.7.min.js"></script>
+<script src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script src="jquery.incremental.js"></script>
+<script>
+
+// Copied from jQuery UI
+var keyCodes = {
+		ALT: 18,
+		BACKSPACE: 8,
+		CAPS_LOCK: 20,
+		COMMA: 188,
+		COMMAND: 91,
+		COMMAND_LEFT: 91, // COMMAND
+		COMMAND_RIGHT: 93,
+		CONTROL: 17,
+		DELETE: 46,
+		DOWN: 40,
+		END: 35,
+		ENTER: 13,
+		ESCAPE: 27,
+		HOME: 36,
+		INSERT: 45,
+		LEFT: 37,
+		MENU: 93, // COMMAND_RIGHT
+		NUMPAD_ADD: 107,
+		NUMPAD_DECIMAL: 110,
+		NUMPAD_DIVIDE: 111,
+		NUMPAD_ENTER: 108,
+		NUMPAD_MULTIPLY: 106,
+		NUMPAD_SUBTRACT: 109,
+		PAGE_DOWN: 34,
+		PAGE_UP: 33,
+		PERIOD: 190,
+		RIGHT: 39,
+		SHIFT: 16,
+		SPACE: 32,
+		TAB: 9,
+		UP: 38,
+		WINDOWS: 91 // COMMAND
+	};
+
+
+// We use the effects queue for event queueing so we can take advantage of queue() and delay()
+
+// Queue a single keydown event, including actually typing the value (key code or alpha characters)
+$.fn.queueKeydown = function (keyOrLetter) {
+	if ($.isNumeric(keyOrLetter)) {
+		var key = keyOrLetter;
+	} else {
+		var key = keyOrLetter.toUpperCase().charCodeAt(0);
+	}
+	var self = this;
+	this.queue(function(next) {
+			self.trigger($.Event("keydown", { which: key } ));
+			next();
+		})
+		.queue(function(next) {
+			if ( ! $.isNumeric(keyOrLetter)) {
+				self.val(self.val() + keyOrLetter);
+			} else if (keyOrLetter === keyCodes.BACKSPACE) {
+				self.val(self.val().slice(0, -1));
+			}
+			next();
+		})
+	return this;
+}
+
+// Queue a single keyup (key code or alpha characters)
+$.fn.queueKeyup = function (keyOrLetter) {
+	if ($.isNumeric(keyOrLetter)) {
+		var key = keyOrLetter;
+	} else {
+		var key = keyOrLetter.toUpperCase().charCodeAt(0);
+	}
+	var self = this;
+	this.queue(function(next) {
+			self.trigger($.Event("keyup", { which: key } ));
+			next();
+		});
+	return this;
+}
+
+// Queue a single key press (key code or alpha characters)
+$.fn.queueKey = function (keyOrLetter) {
+	this.queueKeydown(keyOrLetter)
+		.delay(50)
+		.queueKeyup(keyOrLetter)
+		;
+	return this;
+}
+
+// Queue a sequence of alpha keypresses with a delay between each
+$.fn.queueLetters = function (letters, delay) {
+	delay = delay || 50;
+	var self = this;
+	$.each(letters, function(i, c) {
+		self.queueKey(c).delay(delay);
+	})
+	return this;
+}
+
+module("Default settings", {
+		setup: function() {
+			$("#input").incremental();
+			$("#input")[0].changeCount = 0;
+			// Keep track of the number of times the change event has been fired
+			$("#input").change(function() {
+				this.changeCount = this.changeCount + 1;
+			});
+		}
+	});
+asyncTest("Type and pause fires change after delay", function() {
+	var input = $("#input");
+	input
+		.queueLetters("CAT")
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Overlapping keypresses fire change after delay", function() {
+	var input = $("#input");
+	input
+		.queueKeydown("C")
+		.delay(50)
+		.queueKeydown("A")
+		.delay(50)
+		.queueKeyup("C")
+		.delay(50)
+		.queueKeyup("A")
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Embedded keypresses fire change after delay", function() {
+	var input = $("#input");
+	input
+		.queueKeydown("C")
+		.delay(50)
+		.queueKeydown("A")
+		.delay(50)
+		.queueKeyup("A")
+		.delay(50)
+		.queueKeyup("C")
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Deleting text fires change after delay", function() {
+	var input = $("#input");
+	input
+		.val("CAT")
+		.queueKey(keyCodes.BACKSPACE)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Adding then deleting text doesn't fire change", function() {
+	var input = $("#input");
+	input
+		.val("CAT")
+		.queueKey(keyCodes.BACKSPACE)
+		.queueKey(keyCodes.BACKSPACE)
+		.queueKey(keyCodes.BACKSPACE)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Backspace in empty field doesn't fire change", function() {
+	var input = $("#input");
+	input
+		.queueKey(keyCodes.BACKSPACE)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Tab out of field doesn't fire change", function() {
+	var input = $("#input");
+	input
+		// input receives keydown but not keyup
+		.queueKeydown(keyCodes.TAB)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Tab into field doesn't fire change", function() {
+	var input = $("#input");
+	input
+		// input receives keyup but not keydown
+		.queueKeyup(keyCodes.TAB)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Type and leave field fires change once", function() {
+	var input = $("#input");
+	input
+		.queueLetters("CAT")
+		.queue(function(next) {
+			input.blur();
+			input.change(); // We have to do it manually
+			next();
+		})
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Shift key doesn't fire change", function() {
+	var input = $("#input");
+	input
+		.queueKey(keyCodes.SHIFT)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Arrow key doesn't fire change", function() {
+	var input = $("#input");
+	input
+		.queueKey(keyCodes.LEFT)
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+
+module("Short timer", {
+		setup: function() {
+			$("#input").incremental(100);
+			$("#input")[0].changeCount = 0;
+			// Keep track of the number of times the change event has been fired
+			$("#input").change(function() {
+				this.changeCount = this.changeCount + 1;
+			});
+		}
+	});
+asyncTest("Type and pause fires change after short delay", function() {
+	var input = $("#input");
+	input
+		.queueLetters("CAT")
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.delay(200)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+
+</script>
+</body>
+</html>
