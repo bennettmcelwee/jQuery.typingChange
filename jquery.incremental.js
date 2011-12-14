@@ -1,7 +1,7 @@
 /*
  *	Incremental
  *	
- *  Fires the change event on a text input whenever the user pauses typing.
+ *  Creates an incrementalchange event that you can bind to. It fires whenever a user pauses while typing into the element.
  *
  *	By Bennett McElwee
  *
@@ -12,27 +12,54 @@
 */
 
 (function($) {
-	$.fn.incremental = function(options) {
-		var delayMs = (options && options.delayMs) || options || 500;
-		return this.each(function () {			
-			if (this.type.toUpperCase() == "TEXT" || this.nodeName.toUpperCase() == "TEXTAREA") {
-				var timer = 0;
-				this.incrementalBase = $(this).val();
-				$(this).change(function(event) {
-					clearTimeout (timer);
-					this.incrementalBase = $(this).val();
-					console.log("Change: set base to [" + this.incrementalBase + "]");
-				}).keyup(function(event) {
-					var element = $(this);
-					console.log("Key up: base, value = [" + this.incrementalBase + "] [" + element.val() + "]");
-					clearTimeout (timer);
-					if (element.val() !== this.incrementalBase) {
-						timer = setTimeout(function() {
-							element.change();
-						}, delayMs);
-					}
-				});
+	$.event.special.incrementalchange = {
+
+		setup: function (data, namespaces) {
+			$(this)
+				.data("incrementalchange", {
+					delayMs: (data && data.delayMs) || 500,
+					timer: 0
+				})
+				.bind('keydown.incrementalchange', $.event.special.incrementalchange.keydownHandler)
+				.bind('keyup.incrementalchange', $.event.special.incrementalchange.keyupHandler);
+
+				console.log((10000 + new Date() % 10000).toString().substring(1),
+					"Setup: ", $(this).data("incrementalchange"));
+			
+		},
+
+		teardown: function (namespaces) {
+			$(this)
+				.removeData("incrementalchange")
+				.unbind(".incrementalchange");
+		},
+
+		keydownHandler: function (event) {
+			var element = $(this);
+			var data = element.data("incrementalchange");
+			if (typeof data.lastValue === "undefined") {
+				data.lastValue = this.contentEditable === 'true' ? element.html() : element.val();
 			}
-		});
+		},
+
+		keyupHandler: function (event) {
+			var element = $(this);
+			var data = element.data("incrementalchange");
+			clearTimeout (data.timer);
+			var newValue = this.contentEditable === 'true' ? element.html() : element.val();
+			console.log((10000 + new Date() % 10000).toString().substring(1),
+				"Key up: last, new = [" + data.lastValue + "] [" + newValue + "]");
+			if (typeof data.lastValue !== "undefined" && newValue !== data.lastValue) {
+				data.timer = setTimeout(function() {
+					console.log((10000 + new Date() % 10000).toString().substring(1),
+						"Triggering incrementalchange, last=", data.lastValue);
+					element.trigger("incrementalchange",  data.lastValue);
+					delete data.lastValue;
+				}, data.delayMs);
+			} else {
+				data.timer = 0;
+			}
+		}
 	};
+
 })(jQuery);

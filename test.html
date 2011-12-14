@@ -22,6 +22,9 @@
 <script src="jquery.incremental.js"></script>
 <script>
 
+////////// TEST SETUP
+
+
 // Copied from jQuery UI
 var keyCodes = {
 		ALT: 18,
@@ -118,13 +121,16 @@ $.fn.queueLetters = function (letters, delay) {
 	return this;
 }
 
+
+////////// MODULE
+
+
 module("Default settings", {
 		setup: function() {
-			$("#input").incremental();
 			$("#input")[0].changeCount = 0;
-			// Keep track of the number of times the change event has been fired
-			$("#input").change(function() {
+			$("#input").bind("incrementalchange", function(event, lastValue) {
 				this.changeCount = this.changeCount + 1;
+				this.lastValue = lastValue;
 			});
 		}
 	});
@@ -139,6 +145,7 @@ asyncTest("Type and pause fires change after delay", function() {
 		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
 			next();
 		})
 		.queue(function(next) {
@@ -159,6 +166,7 @@ asyncTest("Overlapping keypresses fire change after delay", function() {
 		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
 			next();
 		})
 		.queue(function(next) {
@@ -179,6 +187,7 @@ asyncTest("Embedded keypresses fire change after delay", function() {
 		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
 			next();
 		})
 		.queue(function(next) {
@@ -198,6 +207,7 @@ asyncTest("Deleting text fires change after delay", function() {
 		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "CAT");
 			next();
 		})
 		.queue(function(next) {
@@ -208,7 +218,7 @@ asyncTest("Deleting text fires change after delay", function() {
 asyncTest("Adding then deleting text doesn't fire change", function() {
 	var input = $("#input");
 	input
-		.val("CAT")
+		.queueLetters("CAT")
 		.queueKey(keyCodes.BACKSPACE)
 		.queueKey(keyCodes.BACKSPACE)
 		.queueKey(keyCodes.BACKSPACE)
@@ -278,6 +288,7 @@ asyncTest("Type and leave field fires change once", function() {
 		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
 			next();
 		})
 		.queue(function(next) {
@@ -314,13 +325,16 @@ asyncTest("Arrow key doesn't fire change", function() {
 		});
 });
 
+
+////////// MODULE
+
+
 module("Short timer", {
 		setup: function() {
-			$("#input").incremental(100);
 			$("#input")[0].changeCount = 0;
-			// Keep track of the number of times the change event has been fired
-			$("#input").change(function() {
+			$("#input").bind("incrementalchange", {delayMs: 200}, function(event, lastValue) {
 				this.changeCount = this.changeCount + 1;
+				this.lastValue = lastValue;
 			});
 		}
 	});
@@ -332,9 +346,38 @@ asyncTest("Type and pause fires change after short delay", function() {
 			equal(input[0].changeCount, 0);
 			next();
 		})
-		.delay(200)
+		.delay(250)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+
+
+////////// MODULE
+
+
+module("Zero timer", {
+		setup: function() {
+			$("#input")[0].changeCount = 0;
+			$("#input").bind("incrementalchange", {delayMs: 1}, function(event, lastValue) {
+				this.changeCount = this.changeCount + 1;
+				this.lastValue = lastValue;
+			});
+		}
+	});
+asyncTest("Typing fires change immediately", function() {
+	var input = $("#input");
+	input
+		.queueLetters("CAT")
+		.queue(function(next) {
+			equal(input[0].changeCount, 3);
+			equal(input[0].lastValue, "CA");
 			next();
 		})
 		.queue(function(next) {

@@ -6,25 +6,26 @@
 <body>
 
 <p>
-Text fields flash green when the change event fires.
+Text fields flash green when the incrementalchange event fires.
 </p>
 
-<input/>
+<input class="tintin"/>
 
-<input/>
+<input class="haddock"/>
 
 <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
 <script src="jquery.incremental.js"></script>
 <script>
-$("input")
-.incremental()
-.change(function() {
-	console.info("Change");
+$("input").bind("incrementalchange", function(event, lastValue) {
 	var element = $(this);
-	element.css("background-color", "green");
-	setTimeout(function() {
+	console.info("Incremental change of input." + this.className + " from " + lastValue + " to " + element.val());
+	element
+		.css("background-color", "green")
+		.delay(100)
+		.queue(function(next) {
 			element.css("background-color", "");
-		}, 100);
+			next();
+		});
 	});
 </script>
 
