@@ -134,7 +134,7 @@ module("Default settings", {
 			});
 		}
 	});
-asyncTest("Type and pause fires change after delay", function() {
+asyncTest("Type and pause fires event after delay", function() {
 	var input = $("#input");
 	input
 		.queueLetters("CAT")
@@ -153,7 +153,7 @@ asyncTest("Type and pause fires change after delay", function() {
 			next();
 		});
 });
-asyncTest("Overlapping keypresses fire change after delay", function() {
+asyncTest("Overlapping keypresses fire event after delay", function() {
 	var input = $("#input");
 	input
 		.queueKeydown("C")
@@ -174,7 +174,7 @@ asyncTest("Overlapping keypresses fire change after delay", function() {
 			next();
 		});
 });
-asyncTest("Embedded keypresses fire change after delay", function() {
+asyncTest("Embedded keypresses fire event after delay", function() {
 	var input = $("#input");
 	input
 		.queueKeydown("C")
@@ -195,7 +195,7 @@ asyncTest("Embedded keypresses fire change after delay", function() {
 			next();
 		});
 });
-asyncTest("Deleting text fires change after delay", function() {
+asyncTest("Deleting text fires event after delay", function() {
 	var input = $("#input");
 	input
 		.val("CAT")
@@ -215,7 +215,7 @@ asyncTest("Deleting text fires change after delay", function() {
 			next();
 		});
 });
-asyncTest("Adding then deleting text doesn't fire change", function() {
+asyncTest("Adding then deleting text doesn't fire event", function() {
 	var input = $("#input");
 	input
 		.queueLetters("CAT")
@@ -232,7 +232,7 @@ asyncTest("Adding then deleting text doesn't fire change", function() {
 			next();
 		});
 });
-asyncTest("Backspace in empty field doesn't fire change", function() {
+asyncTest("Backspace in empty field doesn't fire event", function() {
 	var input = $("#input");
 	input
 		.queueKey(keyCodes.BACKSPACE)
@@ -246,7 +246,7 @@ asyncTest("Backspace in empty field doesn't fire change", function() {
 			next();
 		});
 });
-asyncTest("Tab out of field doesn't fire change", function() {
+asyncTest("Tab out of field doesn't fire event", function() {
 	var input = $("#input");
 	input
 		// input receives keydown but not keyup
@@ -261,7 +261,7 @@ asyncTest("Tab out of field doesn't fire change", function() {
 			next();
 		});
 });
-asyncTest("Tab into field doesn't fire change", function() {
+asyncTest("Tab into field doesn't fire event", function() {
 	var input = $("#input");
 	input
 		// input receives keyup but not keydown
@@ -276,16 +276,15 @@ asyncTest("Tab into field doesn't fire change", function() {
 			next();
 		});
 });
-asyncTest("Type and leave field fires change once", function() {
+asyncTest("Type and leave field fires event immediately", function() {
 	var input = $("#input");
 	input
 		.queueLetters("CAT")
 		.queue(function(next) {
-			input.blur();
 			input.change(); // We have to do it manually
+			input.blur();
 			next();
 		})
-		.delay(500)
 		.queue(function(next) {
 			equal(input[0].changeCount, 1);
 			equal(input[0].lastValue, "");
@@ -296,7 +295,36 @@ asyncTest("Type and leave field fires change once", function() {
 			next();
 		});
 });
-asyncTest("Shift key doesn't fire change", function() {
+asyncTest("Type, wait, fire and leave field doesn't fire event again", function() {
+	var input = $("#input");
+	input
+		.queueLetters("CAT")
+		.queue(function(next) {
+			equal(input[0].changeCount, 0);
+			next();
+		})
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			equal(input[0].lastValue, "");
+			next();
+		})
+		.queue(function(next) {
+			input.change(); // We have to do it manually
+			input.blur();
+			next();
+		})
+		.delay(500)
+		.queue(function(next) {
+			equal(input[0].changeCount, 1);
+			next();
+		})
+		.queue(function(next) {
+			start();
+			next();
+		});
+});
+asyncTest("Shift key doesn't fire event", function() {
 	var input = $("#input");
 	input
 		.queueKey(keyCodes.SHIFT)
@@ -310,7 +338,7 @@ asyncTest("Shift key doesn't fire change", function() {
 			next();
 		});
 });
-asyncTest("Arrow key doesn't fire change", function() {
+asyncTest("Arrow key doesn't fire event", function() {
 	var input = $("#input");
 	input
 		.queueKey(keyCodes.LEFT)
@@ -338,7 +366,7 @@ module("Short timer", {
 			});
 		}
 	});
-asyncTest("Type and pause fires change after short delay", function() {
+asyncTest("Type and pause fires event after short delay", function() {
 	var input = $("#input");
 	input
 		.queueLetters("CAT")
@@ -371,7 +399,7 @@ module("Zero timer", {
 			});
 		}
 	});
-asyncTest("Typing fires change immediately", function() {
+asyncTest("Typing fires event immediately", function() {
 	var input = $("#input");
 	input
 		.queueLetters("CAT")

@@ -26,7 +26,18 @@ $("input").bind("incrementalchange", function(event, lastValue) {
 			element.css("background-color", "");
 			next();
 		});
-	});
+});
+$("input").bind("change", function() {
+	var element = $(this);
+	console.info("Change of input." + this.className + " hasChanged = " + element.isChanged());
+});
+$("input.haddock").bind("change incrementalchange", function(event, lastValue) {
+	if ($(this).isChanged()) {
+		console.info("*** New value: " + $(this).val());
+	} else {
+		console.info("--- Unchanged value: " + $(this).val());
+	}
+});
 </script>
 
 </body>

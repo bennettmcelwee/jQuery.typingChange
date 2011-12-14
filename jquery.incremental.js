@@ -21,11 +21,9 @@
 					timer: 0
 				})
 				.bind('keydown.incrementalchange', $.event.special.incrementalchange.keydownHandler)
-				.bind('keyup.incrementalchange', $.event.special.incrementalchange.keyupHandler);
-
-				console.log((10000 + new Date() % 10000).toString().substring(1),
-					"Setup: ", $(this).data("incrementalchange"));
-			
+				.bind('keyup.incrementalchange',   $.event.special.incrementalchange.keyupHandler)
+				.bind('change.incrementalchange',  $.event.special.incrementalchange.changeHandler);
+				console.log((10000 + new Date() % 10000).toString().substring(1), "Setup: ", $(this).data("incrementalchange"));
 		},
 
 		teardown: function (namespaces) {
@@ -34,11 +32,21 @@
 				.unbind(".incrementalchange");
 		},
 
+		triggerEvent: function() {
+			var element = $(this);
+			var data = element.data("incrementalchange");
+			var newValue = this.contentEditable === 'true' ? element.html() : element.val();
+			console.log((10000 + new Date() % 10000).toString().substring(1), "Triggering incrementalchange, last=", data.initialValue);
+			element.trigger("incrementalchange",  data.initialValue);
+			delete data.initialValue;
+			data.finalValue = newValue;
+		},
+
 		keydownHandler: function (event) {
 			var element = $(this);
 			var data = element.data("incrementalchange");
-			if (typeof data.lastValue === "undefined") {
-				data.lastValue = this.contentEditable === 'true' ? element.html() : element.val();
+			if (typeof data.initialValue === "undefined") {
+				data.initialValue = this.contentEditable === 'true' ? element.html() : element.val();
 			}
 		},
 
@@ -46,20 +54,37 @@
 			var element = $(this);
 			var data = element.data("incrementalchange");
 			clearTimeout (data.timer);
+			data.timer = 0;
 			var newValue = this.contentEditable === 'true' ? element.html() : element.val();
-			console.log((10000 + new Date() % 10000).toString().substring(1),
-				"Key up: last, new = [" + data.lastValue + "] [" + newValue + "]");
-			if (typeof data.lastValue !== "undefined" && newValue !== data.lastValue) {
+			console.log((10000 + new Date() % 10000).toString().substring(1), "Key up: last, new = [" + data.initialValue + "] [" + newValue + "]");
+			if (typeof data.initialValue !== "undefined" && newValue !== data.initialValue) {
+				var self = this;
 				data.timer = setTimeout(function() {
-					console.log((10000 + new Date() % 10000).toString().substring(1),
-						"Triggering incrementalchange, last=", data.lastValue);
-					element.trigger("incrementalchange",  data.lastValue);
-					delete data.lastValue;
-				}, data.delayMs);
-			} else {
+						data.timer = 0;
+						$.event.special.incrementalchange.triggerEvent.call(self);
+					}, data.delayMs);
+			}
+		},
+
+		changeHandler: function (event) {
+			var element = $(this);
+			var data = element.data("incrementalchange");
+			console.log((10000 + new Date() % 10000).toString().substring(1), "Change: timer = [" + data.timer + "]");
+			if (data.timer) {
+				clearTimeout (data.timer);
 				data.timer = 0;
+				$.event.special.incrementalchange.triggerEvent.call(this);
 			}
 		}
+
+	};
+
+	$.fn.isChanged = function() {
+		var element = $(this);
+		var data = element.data("incrementalchange");
+		var value = this.contentEditable === 'true' ? element.html() : element.val();
+		console.log((10000 + new Date() % 10000).toString().substring(1), "isChanged last, new = [" + data.finalValue + "] [" + value + "] returns " + (value !== data.finalValue));
+		return (value !== data.finalValue);
 	};
 
 })(jQuery);
