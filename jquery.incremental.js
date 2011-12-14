@@ -1,7 +1,8 @@
 /*
  *	Incremental
  *	
- *  Creates an incrementalchange event that you can bind to. It fires whenever a user pauses while typing into the element.
+ *  Creates an incrementalchange event that you can bind to.
+ *  Whenever a user pauses while typing into the element, this event will fire if the typing has changed the element's value.
  *
  *	By Bennett McElwee
  *
@@ -79,6 +80,9 @@
 
 	};
 
+	/**
+	 * Return whether this element has changed value since the last time the incrementalchange event occurred.
+	 */
 	$.fn.isChanged = function() {
 		var element = $(this);
 		var data = element.data("incrementalchange");
