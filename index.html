@@ -16,7 +16,7 @@ Text fields flash green when the incrementalchange event fires.
 <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
 <script src="jquery.incremental.js"></script>
 <script>
-$("input").bind("incrementalchange", function(event, lastValue) {
+$("input").on("incrementalchange", function(event, lastValue) {
 	var element = $(this);
 	console.info("Incremental change of input." + this.className + " from " + lastValue + " to " + element.val());
 	element
@@ -27,11 +27,11 @@ $("input").bind("incrementalchange", function(event, lastValue) {
 			next();
 		});
 });
-$("input").bind("change", function() {
+$("input").on("change", function() {
 	var element = $(this);
 	console.info("Change of input." + this.className + " hasChanged = " + element.isChanged());
 });
-$("input.haddock").bind("change incrementalchange", function(event, lastValue) {
+$("input.haddock").on("change incrementalchange", function(event, lastValue) {
 	if ($(this).isChanged()) {
 		console.info("*** New value: " + $(this).val());
 	} else {
