@@ -6,7 +6,7 @@
 <body>
 
 <p>
-Text fields flash green when the incrementalchange event fires.
+Text fields flash green when the typingchange event fires.
 </p>
 
 <input class="tintin"/>
@@ -14,11 +14,11 @@ Text fields flash green when the incrementalchange event fires.
 <input class="haddock"/>
 
 <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
-<script src="jquery.incremental.js"></script>
+<script src="jquery.typingchange.js"></script>
 <script>
-$("input").on("incrementalchange", function(event, lastValue) {
+$("input").on("typingchange", function(event, lastValue) {
 	var element = $(this);
-	console.info("Incremental change of input." + this.className + " from " + lastValue + " to " + element.val());
+	console.info("Typing change in input." + this.className + " from " + lastValue + " to " + element.val());
 	element
 		.css("background-color", "green")
 		.delay(100)
@@ -31,7 +31,7 @@ $("input").on("change", function() {
 	var element = $(this);
 	console.info("Change of input." + this.className + " hasChanged = " + element.isChanged());
 });
-$("input.haddock").on("change incrementalchange", function(event, lastValue) {
+$("input.haddock").on("change typingchange", function(event, lastValue) {
 	if ($(this).isChanged()) {
 		console.info("*** New value: " + $(this).val());
 	} else {

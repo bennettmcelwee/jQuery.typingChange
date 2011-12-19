@@ -19,7 +19,7 @@
 
 <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
 <script src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script src="jquery.incremental.js"></script>
+<script src="jquery.typingchange.js"></script>
 <script>
 
 ////////// TEST SETUP
@@ -128,7 +128,7 @@ $.fn.queueLetters = function (letters, delay) {
 module("Default settings", {
 		setup: function() {
 			$("#input")[0].changeCount = 0;
-			$("#input").on("incrementalchange", function(event, lastValue) {
+			$("#input").on("typingchange", function(event, lastValue) {
 				this.changeCount = this.changeCount + 1;
 				this.lastValue = lastValue;
 			});
@@ -360,7 +360,7 @@ asyncTest("Arrow key doesn't fire event", function() {
 module("Short timer", {
 		setup: function() {
 			$("#input")[0].changeCount = 0;
-			$("#input").on("incrementalchange", {delayMs: 200}, function(event, lastValue) {
+			$("#input").on("typingchange", {delayMs: 200}, function(event, lastValue) {
 				this.changeCount = this.changeCount + 1;
 				this.lastValue = lastValue;
 			});
@@ -393,7 +393,7 @@ asyncTest("Type and pause fires event after short delay", function() {
 module("Zero timer", {
 		setup: function() {
 			$("#input")[0].changeCount = 0;
-			$("#input").on("incrementalchange", {delayMs: 1}, function(event, lastValue) {
+			$("#input").on("typingchange", {delayMs: 1}, function(event, lastValue) {
 				this.changeCount = this.changeCount + 1;
 				this.lastValue = lastValue;
 			});

@@ -1,7 +1,7 @@
 /*
- *	Incremental
+ *	TypingChange
  *	
- *  Creates an incrementalchange event that you can bind to.
+ *  Creates a typingchange event that you can bind to.
  *  Whenever a user pauses while typing into the element, this event will fire if the typing has changed the element's value.
  *
  *	By Bennett McElwee
@@ -13,39 +13,39 @@
 */
 
 (function($) {
-	$.event.special.incrementalchange = {
+	$.event.special.typingchange = {
 
 		setup: function (data, namespaces) {
 			$(this)
-				.data("incrementalchange", {
+				.data("typingchange", {
 					delayMs: (data && data.delayMs) || 500,
 					timer: 0
 				})
-				.bind('keydown.incrementalchange', $.event.special.incrementalchange.keydownHandler)
-				.bind('keyup.incrementalchange',   $.event.special.incrementalchange.keyupHandler)
-				.bind('change.incrementalchange',  $.event.special.incrementalchange.changeHandler);
-				console.log((10000 + new Date() % 10000).toString().substring(1), "Setup: ", $(this).data("incrementalchange"));
+				.bind('keydown.typingchange', $.event.special.typingchange.keydownHandler)
+				.bind('keyup.typingchange',   $.event.special.typingchange.keyupHandler)
+				.bind('change.typingchange',  $.event.special.typingchange.changeHandler);
+				console.log((10000 + new Date() % 10000).toString().substring(1), "Setup: ", $(this).data("typingchange"));
 		},
 
 		teardown: function (namespaces) {
 			$(this)
-				.removeData("incrementalchange")
-				.unbind(".incrementalchange");
+				.removeData("typingchange")
+				.unbind(".typingchange");
 		},
 
 		triggerEvent: function() {
 			var element = $(this);
-			var data = element.data("incrementalchange");
+			var data = element.data("typingchange");
 			var newValue = this.contentEditable === 'true' ? element.html() : element.val();
-			console.log((10000 + new Date() % 10000).toString().substring(1), "Triggering incrementalchange, last=", data.initialValue);
-			element.trigger("incrementalchange",  data.initialValue);
+			console.log((10000 + new Date() % 10000).toString().substring(1), "Triggering typingchange, last=", data.initialValue);
+			element.trigger("typingchange",  data.initialValue);
 			delete data.initialValue;
 			data.finalValue = newValue;
 		},
 
 		keydownHandler: function (event) {
 			var element = $(this);
-			var data = element.data("incrementalchange");
+			var data = element.data("typingchange");
 			if (typeof data.initialValue === "undefined") {
 				data.initialValue = this.contentEditable === 'true' ? element.html() : element.val();
 			}
@@ -53,7 +53,7 @@
 
 		keyupHandler: function (event) {
 			var element = $(this);
-			var data = element.data("incrementalchange");
+			var data = element.data("typingchange");
 			clearTimeout (data.timer);
 			data.timer = 0;
 			var newValue = this.contentEditable === 'true' ? element.html() : element.val();
@@ -62,30 +62,30 @@
 				var self = this;
 				data.timer = setTimeout(function() {
 						data.timer = 0;
-						$.event.special.incrementalchange.triggerEvent.call(self);
+						$.event.special.typingchange.triggerEvent.call(self);
 					}, data.delayMs);
 			}
 		},
 
 		changeHandler: function (event) {
 			var element = $(this);
-			var data = element.data("incrementalchange");
+			var data = element.data("typingchange");
 			console.log((10000 + new Date() % 10000).toString().substring(1), "Change: timer = [" + data.timer + "]");
 			if (data.timer) {
 				clearTimeout (data.timer);
 				data.timer = 0;
-				$.event.special.incrementalchange.triggerEvent.call(this);
+				$.event.special.typingchange.triggerEvent.call(this);
 			}
 		}
 
 	};
 
 	/**
-	 * Return whether this element has changed value since the last time the incrementalchange event occurred.
+	 * Return whether this element has changed value since the last time the typingchange event occurred.
 	 */
 	$.fn.isChanged = function() {
 		var element = $(this);
-		var data = element.data("incrementalchange");
+		var data = element.data("typingchange");
 		var value = this.contentEditable === 'true' ? element.html() : element.val();
 		console.log((10000 + new Date() % 10000).toString().substring(1), "isChanged last, new = [" + data.finalValue + "] [" + value + "] returns " + (value !== data.finalValue));
 		return (value !== data.finalValue);
